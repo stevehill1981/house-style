@@ -2,7 +2,11 @@ extends: substitution
 message: "British English: use '%s' instead of '%s'."
 link: https://github.com/stevehill1981/house-style
 level: suggestion
-ignorecase: true
+# Case-SENSITIVE on purpose: American spellings in running prose are lowercase
+# ("color choice"), while capitalised forms are almost always proper nouns or
+# titles we must NOT change (TRS-80 Color Computer, X-COM: UFO Defense, Chris
+# Gray). Matching lowercase only kills that false-positive class wholesale.
+ignorecase: false
 action:
   name: replace
 # Critical Rule: British English (colour, learnt, centre). Flags the clear,
