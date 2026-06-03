@@ -35,6 +35,18 @@ Add `.vale/` to `.gitignore`. Re-run `vale sync` after a new style release.
 
 A global `~/.vale.ini` with the same `Packages` line makes `vale <file>` work in any directory — no per-repo config needed for one-off prose. A repo's own `.vale.ini` overrides the global one when present.
 
+## Advisory pre-commit hook
+
+`hooks/pre-commit-prose` runs Vale on staged markdown and prints suggestions when you commit. It **never blocks** — it's a nudge, not a gate (always exits 0), and it's a silent no-op if Vale isn't installed or the package isn't synced yet. It uses the repo-local `.vale.ini` if present, else the global `~/.vale.ini`.
+
+Install it into one or more repos (symlinks, so a single edit here updates them all):
+
+```bash
+./install-hooks.sh /path/to/repo /path/to/another-repo
+```
+
+The installer skips any repo that already has a non-symlink `pre-commit` hook, so it won't clobber husky/lefthook setups.
+
 ## Readability
 
 Sentence length and grade level aren't a Vale job — formulas inflate grade for unavoidable domain nouns and choke on tables. The companion `prose-report.mjs` (in the website repo) owns that signal; the one actionable number is sentences over ~30 words.

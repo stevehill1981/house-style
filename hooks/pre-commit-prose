@@ -1,0 +1,19 @@
+#!/bin/sh
+# Advisory prose check — runs Vale on staged markdown and prints suggestions.
+# NEVER blocks the commit (always exits 0); it's a nudge, not a gate.
+# Part of the house writing process. See stevehill1981/house-style.
+
+command -v vale >/dev/null 2>&1 || exit 0
+
+files=$(git diff --cached --name-only --diff-filter=ACM | grep -Ei '\.(md|mdx)$')
+[ -z "$files" ] && exit 0
+
+# Uses the repo-local .vale.ini if present, else the global ~/.vale.ini.
+# Silent no-op if the style package isn't synced yet (vale errors -> empty).
+out=$(printf '%s\n' "$files" | tr '\n' '\0' | xargs -0 vale --no-exit 2>/dev/null)
+[ -z "$out" ] && exit 0
+
+printf '\n\033[36m── prose suggestions (advisory — commit proceeds) ──\033[0m\n'
+printf '%s\n' "$out"
+printf '\033[36m── run \033[0mvale <file>\033[36m for the full report ──\033[0m\n\n'
+exit 0
