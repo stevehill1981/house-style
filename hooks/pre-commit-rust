@@ -1,0 +1,33 @@
+#!/bin/sh
+# Pre-commit for Rust repos in the house: the advisory prose check (never blocks)
+# followed by a BLOCKING `cargo fmt --check`. Catches format drift locally instead
+# of only at CI. Installed via `install-hooks.sh --rust`. See stevehill1981/house-style.
+
+# Resolve this script's real directory even when invoked via the .git/hooks symlink.
+# (BSD readlink has no -f, so walk the link chain by hand.)
+src="$0"
+while [ -L "$src" ]; do
+  target="$(readlink "$src")"
+  case "$target" in
+    /*) src="$target" ;;
+    *)  src="$(dirname "$src")/$target" ;;
+  esac
+done
+hookdir="$(cd "$(dirname "$src")" && pwd)"
+
+# 1. Advisory prose check — run as a child so its `exit 0` doesn't end this hook.
+[ -x "$hookdir/pre-commit-prose" ] && sh "$hookdir/pre-commit-prose"
+
+# 2. Blocking format gate — only when committing Rust in a Cargo workspace.
+#    Self-disables anywhere without a Cargo.toml, so it's harmless in non-Rust repos.
+if [ -f Cargo.toml ] && command -v cargo >/dev/null 2>&1; then
+  if git diff --cached --name-only --diff-filter=ACM | grep -q '\.rs$'; then
+    if ! cargo fmt --all --check >/dev/null 2>&1; then
+      printf '\n\033[31m\xe2\x9c\x97 cargo fmt --check failed — formatting is off.\033[0m\n'
+      printf '  Run \033[1mcargo fmt\033[0m, restage, and commit again.\n'
+      printf '  (Local gate so format drift is caught here, not at CI.)\n\n'
+      exit 1
+    fi
+  fi
+fi
+exit 0

@@ -47,6 +47,18 @@ Install it into one or more repos (symlinks, so a single edit here updates them 
 
 The installer skips any repo that already has a non-symlink `pre-commit` hook, so it won't clobber husky/lefthook setups.
 
+### Rust repos — add a blocking format gate
+
+`hooks/pre-commit-rust` runs the same advisory prose check **and then** a **blocking** `cargo fmt --all --check`, so formatting drift is caught at commit time instead of only at CI. It self-disables anywhere without a `Cargo.toml` (and only runs when the commit stages `.rs` files), so it's safe even if installed broadly. Unlike the prose check, this one **does** block — on failure it tells you to run `cargo fmt` and exits non-zero.
+
+Install it with the `--rust` flag (it replaces the prose-only symlink):
+
+```bash
+./install-hooks.sh --rust /path/to/rust-repo
+```
+
+This is the one deliberate exception to the "never gates" rule: prose stays advisory; code formatting is deterministic, so it's a hard gate.
+
 ## Readability
 
 Sentence length and grade level aren't a Vale job — formulas inflate grade for unavoidable domain nouns and choke on tables. The companion `prose-report.mjs` (in the website repo) owns that signal; the one actionable number is sentences over ~30 words.
