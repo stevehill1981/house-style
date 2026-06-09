@@ -1,0 +1,21 @@
+#!/bin/sh
+# Pre-push for Rust repos in the house: a BLOCKING clippy gate that mirrors CI
+# (`cargo clippy --workspace --all-targets -- -D warnings`). Runs once per push
+# rather than per commit, so the slow all-targets compile stays off the inner
+# loop while still catching lint drift before it reaches the remote — the gap
+# that lets `--all-targets` / `-D warnings` failures land on a push-to-main repo.
+# Installed via `install-hooks.sh --rust`. See stevehill1981/house-style.
+#
+# Self-disables anywhere without a Cargo.toml, so it's harmless in non-Rust repos.
+
+if [ -f Cargo.toml ] && command -v cargo >/dev/null 2>&1; then
+  printf '\033[2m… pre-push: cargo clippy --workspace --all-targets -- -D warnings\033[0m\n'
+  # --quiet hushes the Compiling/Finished progress; lint diagnostics still print.
+  if ! cargo clippy --workspace --all-targets --quiet -- -D warnings; then
+    printf '\n\033[31m\xe2\x9c\x97 cargo clippy failed — lint errors above.\033[0m\n'
+    printf '  Fix them (or run \033[1mcargo clippy --workspace --all-targets -- -D warnings\033[0m), commit, and push again.\n'
+    printf '  (Local gate mirrors CI so clippy drift is caught here, not after the push.)\n\n'
+    exit 1
+  fi
+fi
+exit 0
