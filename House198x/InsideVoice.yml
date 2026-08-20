@@ -1,0 +1,26 @@
+extends: existence
+message: "'%s' — names something the reader cannot open. State the fact; leave the internal artefact out of a reader-facing page."
+link: https://github.com/stevehill1981/house-style
+level: suggestion
+ignorecase: true
+# "Know what you're trying to say before you say it" — and who you're saying it
+# to. Someone reading a public page did not attend the discussion and cannot
+# open a decision record, a plan, or a private library. Sending them to one
+# either strands them or asks them to take the claim on trust.
+#
+# Deliberately narrow. Process talk in general ("we decided", "deliberately
+# left open") is often correct on a teaching page — telling a learner what is
+# deferred to a later unit is doing its job. What does not belong is the
+# pointer at an artefact only a contributor can reach.
+#
+# Enable per-glob: on for reader-facing paths, off for decisions/, plans, and
+# source comments, where naming these is the point.
+tokens:
+  - primary reference library
+  - the umbrella repo(sitory)?
+  - the family's [a-z]+ (decision|decisions|record)
+  - the decision record
+  - our decision record
+  - see the decisions? (folder|record|entry)
+  - by-topic/
+  - decisions/[a-z-]+\.md
