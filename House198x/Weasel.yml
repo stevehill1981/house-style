@@ -6,18 +6,44 @@ ignorecase: true
 # "Non-essential information is an obstacle, not neutral." Intensifiers and
 # hedges that add words without adding meaning. Not condescension (see
 # Condescending.yml) — pure filler.
+#
+# nonword: true disables Vale's automatic \b...\b wrapping, so every token
+# below carries its own boundaries. This is required by the "rather" pattern,
+# which has to consume the character after the word and therefore cannot have a
+# closing \b appended to it. Keep the explicit \b on new tokens or "very" will
+# start matching inside "every".
+nonword: true
 tokens:
-  - very
-  - really
-  - quite
-  - rather
-  - somewhat
-  - fairly
-  - pretty much
-  - a lot
-  - lots of
-  - actually
-  - literally
-  - essentially
-  - in essence
-  - at the end of the day
+  - \bvery\b
+  - \breally\b
+  - \bquite\b
+  - \bsomewhat\b
+  - \bfairly\b
+  - \bpretty much\b
+  - \ba lot\b
+  - \blots of\b
+  - \bactually\b
+  - \bliterally\b
+  - \bessentially\b
+  - \bin essence\b
+  - \bat the end of the day\b
+  # "rather" is a hedge as an intensifier ("rather good") but not as a
+  # comparison ("X rather than Y"), which is the sentence doing its job. The
+  # bare token flagged both, and in technical prose the comparison is far more
+  # common — a single day's writing produced eleven flags, all of them the
+  # comparison and all of them wrong.
+  #
+  # Vale compiles with Go's RE2, which has no lookahead, so "not followed by
+  # than" is spelled out as an alternation over the letters of the word:
+  # after "rather" allow punctuation, or whitespace followed by anything that
+  # cannot be starting "than". \s covers newlines, so a hard-wrapped
+  # "rather\nthan" is excluded too — which matters, this house wraps its prose.
+  #
+  # Known limit: "would rather" and "we'd rather" still flag. Excluding those
+  # needs lookbehind, which RE2 also lacks. They are rare enough in technical
+  # writing to live with; the comparison was not.
+  #
+  # Cost of the approach: the reported match includes the trailing character,
+  # so the message reads 'rather g' rather than 'rather'. Vale reports the whole
+  # match and ignores capture groups, so this cannot be trimmed.
+  - \brather(?:[,.;:!?]|\s(?:[^t]|t[^h]|th[^a]|tha[^n]))
