@@ -1,0 +1,41 @@
+#!/bin/sh
+# Commit-msg gate for repos whose releases are cut from commit subjects:
+# release-plz and git-cliff read the conventional-commit prefix to pick the
+# version bump and the CHANGELOG section. A subject without one is filed under
+# "Other" as a raw line and moves no version.
+#
+# Opt-in per repo (`install-hooks.sh --conventional`), because repos that don't
+# generate a changelog from commits have no use for the constraint.
+#
+# The pull request title matters more than any single subject — a squash takes
+# its subject from the title once a branch has more than one commit — so this is
+# a local convenience, not the enforcement point. That belongs in CI.
+
+msgfile="$1"
+[ -n "$msgfile" ] && [ -f "$msgfile" ] || exit 0
+
+# First non-comment, non-blank line is the subject.
+subject="$(grep -v '^#' "$msgfile" | sed '/^[[:space:]]*$/d' | head -1)"
+[ -n "$subject" ] || exit 0
+
+# Exempt the subjects git writes itself, and the ones destined to disappear in a
+# rebase. Gating these would block a merge, a revert or a fixup for a prefix
+# their final form never keeps.
+case "$subject" in
+  Merge\ *|Revert\ *|fixup!\ *|squash!\ *|amend!\ *) exit 0 ;;
+esac
+
+types='feat|fix|chore|docs|refactor|perf|test|ci|build|style|revert'
+if printf '%s\n' "$subject" | grep -Eq "^($types)(\([a-z0-9._-]+\))?!?: .+"; then
+  exit 0
+fi
+
+printf '\n\033[31m\xe2\x9c\x97 commit subject needs a conventional-commit prefix.\033[0m\n\n'
+printf '  got:      %s\n' "$subject"
+printf '  expected: <type>[(scope)][!]: <description>\n'
+printf '  types:    feat fix chore docs refactor perf test ci build style revert\n\n'
+printf '  The release tooling reads this prefix to choose the version bump and\n'
+printf '  the CHANGELOG section. Without one the change lands under "Other".\n\n'
+printf '  Reuse the message you just wrote:\n'
+printf '    \033[1mgit commit -e -F .git/COMMIT_EDITMSG\033[0m\n\n'
+exit 1

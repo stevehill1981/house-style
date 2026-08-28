@@ -59,6 +59,25 @@ Install it with the `--rust` flag (it replaces the prose-only symlink):
 
 This is the one deliberate exception to the "never gates" rule: prose stays advisory; code formatting is deterministic, so it's a hard gate.
 
+### Repos that generate a changelog from commits
+
+`hooks/commit-msg-conventional` blocks a commit whose subject carries no
+[Conventional Commits](https://www.conventionalcommits.org) prefix. Install it
+where release-plz or git-cliff computes the version bump and the CHANGELOG from
+commit subjects — without a prefix a change is filed under "Other" and moves no
+version. Merge, revert and `fixup!` subjects are exempt, since git writes those
+itself or a rebase consumes them.
+
+```bash
+./install-hooks.sh --rust --conventional /path/to/repo
+```
+
+The flags combine. This one is opt-in rather than part of `--rust`, because a
+repo that doesn't generate a changelog from commits gains nothing from the
+constraint. It is also only a convenience: a squash takes its subject from the
+pull request title once a branch has more than one commit, so the title is what
+the release tooling reads. Enforce that in CI.
+
 ## Readability
 
 Sentence length and grade level aren't a Vale job — formulas inflate grade for unavoidable domain nouns and choke on tables. The companion `prose-report.mjs` (in the website repo) owns that signal; the one actionable number is sentences over ~30 words.
